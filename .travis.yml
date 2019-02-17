@@ -55,7 +55,7 @@ jobs:
       script: pip install -e .[doc] && docs/build.sh
     - name: Build docker
       stage: pre-test
-      script: docker build -t airflow/travis
+      script: docker build -t airflow/travis .
 
 cache:
   directories:
