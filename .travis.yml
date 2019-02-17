@@ -21,6 +21,8 @@ dist: trusty
 language: python
 python:
   - "3.6"
+services:
+  - docker
 env:
   global:
     - DOCKER_COMPOSE_VERSION=1.20.0
@@ -51,6 +53,9 @@ jobs:
     - name: Check docs
       stage: pre-test
       script: pip install -e .[doc] && docs/build.sh
+    - name: Build docker
+      stage: pre-test
+      script: docker build -t airflow/travis
 
 cache:
   directories:
@@ -61,15 +66,9 @@ before_install:
   # Required for K8s v1.10.x. See
   # https://github.com/kubernetes/kubernetes/issues/61058#issuecomment-372764783
   - if [ ! -z "$KUBERNETES_VERSION" ]; then sudo mount --make-shared / && sudo service docker restart; fi
-install:
-  # Use recent docker-compose version
-  - sudo rm /usr/local/bin/docker-compose
-  - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
-  - chmod +x docker-compose
-  - sudo mv docker-compose /usr/local/bin
-  - pip install --upgrade pip
-  - docker-compose -f scripts/ci/docker-compose.yml pull --quiet --parallel
 script:
+  - docker images
+  - docker run airflow/travis
   - if [ -z "$KUBERNETES_VERSION" ]; then
       docker-compose --log-level ERROR -f scripts/ci/docker-compose.yml run airflow-testing /app/scripts/ci/run-ci.sh;
     fi
