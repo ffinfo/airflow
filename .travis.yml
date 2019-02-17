@@ -48,7 +48,6 @@ jobs:
       stage: pre-test
       script:
         - docker build -t airflow/travis .
-        - docker save airflow/travis | gzip > $HOME/docker/image.tar.gz
     - name: Flake8
       stage: pre-test
       script: pip install flake8 && flake8
@@ -61,7 +60,7 @@ jobs:
 
 cache:
   directories:
-    - $HOME/docker
+    - /var/lib/docker
     - $HOME/.wheelhouse/
     - $HOME/.cache/pip
     - $HOME/.travis_cache/
@@ -70,7 +69,6 @@ before_install:
   # https://github.com/kubernetes/kubernetes/issues/61058#issuecomment-372764783
   - if [ ! -z "$KUBERNETES_VERSION" ]; then sudo mount --make-shared / && sudo service docker restart; fi
 script:
-  - gunzip $HOME/docker/image.tar.gz | docker load
   - docker images
   - docker run airflow/travis
   - if [ -z "$KUBERNETES_VERSION" ]; then
