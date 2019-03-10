@@ -37,6 +37,7 @@ from flask._compat import PY2
 from parameterized import parameterized
 from werkzeug.test import Client
 
+import airflow
 from airflow import configuration as conf
 from airflow import models, settings
 from airflow.config_templates.airflow_local_settings import DEFAULT_LOGGING_CONFIG
@@ -46,7 +47,7 @@ from airflow.models import DAG, DagRun, TaskInstance
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.settings import Session
 from airflow.utils import dates, timezone
-from airflow.utils.db import create_session
+from airflow.utils.db import create_session, resetdb
 from airflow.utils.state import State
 from airflow.utils.timezone import datetime
 from airflow.www import app as application
@@ -56,6 +57,7 @@ from tests.test_utils.db import clear_db_runs, clear_db_pools, clear_db_variable
 class TestBase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        resetdb()  # FIXME: this is required because in th resting the permission tables are not correct
         conf.load_test_config()
         cls.app, cls.appbuilder = application.create_app(session=Session, testing=True)
         cls.app.config['WTF_CSRF_ENABLED'] = False
@@ -977,23 +979,12 @@ class TestDagACLView(TestBase):
     """
     Test Airflow DAG acl
     """
-    default_date = timezone.datetime(2018, 6, 1)
+    default_date = airflow.utils.dates.days_ago(2)
     run_id = "test_{}".format(models.DagRun.id_for_date(default_date))
 
     @classmethod
     def setUpClass(cls):
         super(TestDagACLView, cls).setUpClass()
-
-    def cleanup_dagruns(self):
-        DR = models.DagRun
-        dag_ids = ['example_bash_operator',
-                   'example_subdag_operator']
-        (self.session
-             .query(DR)
-             .filter(DR.dag_id.in_(dag_ids))
-             .filter(DR.run_id == self.run_id)
-             .delete(synchronize_session='fetch'))
-        self.session.commit()
 
     def prepare_dagruns(self):
         dagbag = models.DagBag(include_examples=True)
@@ -1014,7 +1005,7 @@ class TestDagACLView(TestBase):
 
     def setUp(self):
         super(TestDagACLView, self).setUp()
-        self.cleanup_dagruns()
+        clear_db_runs()
         self.prepare_dagruns()
         self.logout()
         self.appbuilder.sm.sync_roles()
