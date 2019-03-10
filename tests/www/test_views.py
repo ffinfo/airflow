@@ -50,7 +50,7 @@ from airflow.utils.db import create_session
 from airflow.utils.state import State
 from airflow.utils.timezone import datetime
 from airflow.www import app as application
-from tests.test_utils.db import clear_db_runs, clear_db_pools, clear_db_conections, clear_db_variables
+from tests.test_utils.db import clear_db_runs, clear_db_pools, clear_db_variables
 
 
 class TestBase(unittest.TestCase):
@@ -124,7 +124,6 @@ class TestConnectionModelView(TestBase):
         }
 
     def tearDown(self):
-        clear_db_conections()
         super(TestConnectionModelView, self).tearDown()
 
     def test_create_connection(self):
