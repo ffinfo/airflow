@@ -24,7 +24,7 @@ from airflow import configuration
 from airflow.exceptions import AirflowSensorTimeout
 from airflow.sensors.hdfs_sensor import HdfsSensor
 from airflow.utils.timezone import datetime
-from tests.core import FakeHDFSHook
+from tests.test_core import FakeHDFSHook
 
 configuration.load_test_config()
 
