@@ -40,6 +40,7 @@ from werkzeug.test import Client
 from airflow import configuration as conf
 from airflow import models, settings
 from airflow.config_templates.airflow_local_settings import DEFAULT_LOGGING_CONFIG
+from airflow.example_dags import example_bash_operator, example_subdag_operator, example_xcom
 from airflow.jobs import BaseJob
 from airflow.models import DAG, DagRun, TaskInstance
 from airflow.models.connection import Connection
@@ -50,6 +51,7 @@ from airflow.utils.db import create_session
 from airflow.utils.state import State
 from airflow.utils.timezone import datetime
 from airflow.www import app as application
+from tests.test_utils.db import clear_db_runs, clear_db_pools, clear_db_conections, clear_db_variables
 
 
 class TestBase(unittest.TestCase):
@@ -84,11 +86,6 @@ class TestBase(unittest.TestCase):
 
     def logout(self):
         return self.client.get('/logout/')
-
-    def clear_table(self, model):
-        self.session.query(model).delete()
-        self.session.commit()
-        self.session.close()
 
     def check_content_in_response(self, text, resp, resp_code=200):
         resp_html = resp.data.decode('utf-8')
@@ -128,7 +125,7 @@ class TestConnectionModelView(TestBase):
         }
 
     def tearDown(self):
-        self.clear_table(Connection)
+        clear_db_conections()
         super(TestConnectionModelView, self).tearDown()
 
     def test_create_connection(self):
@@ -148,7 +145,7 @@ class TestVariableModelView(TestBase):
         }
 
     def tearDown(self):
-        self.clear_table(models.Variable)
+        clear_db_variables()
         super(TestVariableModelView, self).tearDown()
 
     def test_can_handle_error_on_decrypt(self):
@@ -236,7 +233,7 @@ class TestPoolModelView(TestBase):
         }
 
     def tearDown(self):
-        self.clear_table(models.Pool)
+        clear_db_pools()
         super(TestPoolModelView, self).tearDown()
 
     def test_create_pool_with_same_name(self):
@@ -298,28 +295,15 @@ class TestAirflowBaseViews(TestBase):
         super(TestAirflowBaseViews, self).setUp()
         self.logout()
         self.login()
-        self.cleanup_dagruns()
+        clear_db_runs()
         self.prepare_dagruns()
 
-    def cleanup_dagruns(self):
-        DR = models.DagRun
-        dag_ids = ['example_bash_operator',
-                   'example_subdag_operator',
-                   'example_xcom']
-        (self.session
-             .query(DR)
-             .filter(DR.dag_id.in_(dag_ids))
-             .filter(DR.run_id == self.run_id)
-             .delete(synchronize_session='fetch'))
-        self.session.commit()
-
     def prepare_dagruns(self):
-        dagbag = models.DagBag(include_examples=True)
-        self.bash_dag = dagbag.dags['example_bash_operator']
+        self.bash_dag = example_bash_operator.dag
         self.bash_dag.sync_to_db()
-        self.sub_dag = dagbag.dags['example_subdag_operator']
+        self.sub_dag = example_subdag_operator.dag
         self.sub_dag.sync_to_db()
-        self.xcom_dag = dagbag.dags['example_xcom']
+        self.xcom_dag = example_xcom.dag
         self.xcom_dag.sync_to_db()
 
         self.bash_dagrun = self.bash_dag.create_dagrun(
@@ -634,7 +618,7 @@ class TestLogView(TestBase):
 
     def tearDown(self):
         logging.config.dictConfig(DEFAULT_LOGGING_CONFIG)
-        self.clear_table(TaskInstance)
+        clear_db_runs()
 
         shutil.rmtree(self.settings_folder)
         conf.set('core', 'logging_config_class', '')
