@@ -21,9 +21,9 @@ import unittest
 
 from airflow import configuration
 from airflow.api.common.experimental.trigger_dag import trigger_dag
-from airflow.models import DagRun
-from airflow.settings import Session
+from airflow.example_dags import example_bash_operator
 from airflow.www import app as application
+from tests.test_utils.db import clear_db_runs
 
 
 class TestDagRunsEndpoint(unittest.TestCase):
@@ -31,10 +31,8 @@ class TestDagRunsEndpoint(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         super(TestDagRunsEndpoint, cls).setUpClass()
-        session = Session()
-        session.query(DagRun).delete()
-        session.commit()
-        session.close()
+        example_bash_operator.dag.sync_to_db()
+        clear_db_runs()
 
     def setUp(self):
         super(TestDagRunsEndpoint, self).setUp()
@@ -43,10 +41,7 @@ class TestDagRunsEndpoint(unittest.TestCase):
         self.app = app.test_client()
 
     def tearDown(self):
-        session = Session()
-        session.query(DagRun).delete()
-        session.commit()
-        session.close()
+        clear_db_runs()
         super(TestDagRunsEndpoint, self).tearDown()
 
     def test_get_dag_runs_success(self):
