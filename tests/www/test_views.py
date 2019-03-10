@@ -30,8 +30,8 @@ import urllib
 from datetime import timedelta
 from urllib.parse import quote_plus
 
-import mock
 import jinja2
+import mock
 from flask import url_for
 from flask._compat import PY2
 from parameterized import parameterized
@@ -43,7 +43,6 @@ from airflow.config_templates.airflow_local_settings import DEFAULT_LOGGING_CONF
 from airflow.example_dags import example_bash_operator, example_subdag_operator, example_xcom
 from airflow.jobs import BaseJob
 from airflow.models import DAG, DagRun, TaskInstance
-from airflow.models.connection import Connection
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.settings import Session
 from airflow.utils import dates, timezone

@@ -1981,6 +1981,7 @@ class DagBagTest(unittest.TestCase):
         with create_session() as session:
             session.query(DagModel).filter(DagModel.dag_id == 'test_deactivate_unknown_dags').delete()
 
+
 class TaskInstanceTest(unittest.TestCase):
 
     def tearDown(self):
