@@ -60,6 +60,7 @@ from airflow.hooks.sqlite_hook import SqliteHook
 from airflow.bin import cli
 from airflow.settings import Session
 from airflow.utils import timezone
+from airflow.utils.db import add_default_conections
 from airflow.utils.timezone import datetime
 from airflow.utils.state import State
 from airflow.utils.dates import days_ago, infer_time_unit, round_time, scale_time_units
@@ -1416,6 +1417,7 @@ class CliTests(unittest.TestCase):
         resetdb_mock.assert_called_once_with()
 
     def test_cli_connections_list(self):
+        add_default_conections()
         with mock.patch('sys.stdout',
                         new_callable=six.StringIO) as mock_stdout:
             cli.connections(self.parser.parse_args(['connections', '--list']))

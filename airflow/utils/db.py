@@ -83,16 +83,8 @@ def merge_conn(conn, session=None):
         session.commit()
 
 
-def initdb():
-    from airflow import models
+def add_default_conections():
     from airflow.models.connection import Connection
-    upgradedb()
-
-    merge_conn(
-        Connection(
-            conn_id='airflow_db', conn_type='mysql',
-            host='mysql', login='root', password='',
-            schema='airflow'))
     merge_conn(
         Connection(
             conn_id='beeline_default', conn_type='beeline', port="10000",
@@ -180,8 +172,8 @@ def initdb():
             conn_id='sftp_default', conn_type='sftp',
             host='localhost', port=22, login='airflow',
             extra='''
-                {"key_file": "~/.ssh/id_rsa", "no_host_key_check": true}
-            '''))
+                    {"key_file": "~/.ssh/id_rsa", "no_host_key_check": true}
+                '''))
     merge_conn(
         Connection(
             conn_id='fs_default', conn_type='fs',
@@ -215,49 +207,49 @@ def initdb():
         Connection(
             conn_id='emr_default', conn_type='emr',
             extra='''
-                {   "Name": "default_job_flow_name",
-                    "LogUri": "s3://my-emr-log-bucket/default_job_flow_location",
-                    "ReleaseLabel": "emr-4.6.0",
-                    "Instances": {
-                        "Ec2KeyName": "mykey",
-                        "Ec2SubnetId": "somesubnet",
-                        "InstanceGroups": [
+                    {   "Name": "default_job_flow_name",
+                        "LogUri": "s3://my-emr-log-bucket/default_job_flow_location",
+                        "ReleaseLabel": "emr-4.6.0",
+                        "Instances": {
+                            "Ec2KeyName": "mykey",
+                            "Ec2SubnetId": "somesubnet",
+                            "InstanceGroups": [
+                                {
+                                    "Name": "Master nodes",
+                                    "Market": "ON_DEMAND",
+                                    "InstanceRole": "MASTER",
+                                    "InstanceType": "r3.2xlarge",
+                                    "InstanceCount": 1
+                                },
+                                {
+                                    "Name": "Slave nodes",
+                                    "Market": "ON_DEMAND",
+                                    "InstanceRole": "CORE",
+                                    "InstanceType": "r3.2xlarge",
+                                    "InstanceCount": 1
+                                }
+                            ],
+                            "TerminationProtected": false,
+                            "KeepJobFlowAliveWhenNoSteps": false
+                        },
+                        "Applications":[
+                            { "Name": "Spark" }
+                        ],
+                        "VisibleToAllUsers": true,
+                        "JobFlowRole": "EMR_EC2_DefaultRole",
+                        "ServiceRole": "EMR_DefaultRole",
+                        "Tags": [
                             {
-                                "Name": "Master nodes",
-                                "Market": "ON_DEMAND",
-                                "InstanceRole": "MASTER",
-                                "InstanceType": "r3.2xlarge",
-                                "InstanceCount": 1
+                                "Key": "app",
+                                "Value": "analytics"
                             },
                             {
-                                "Name": "Slave nodes",
-                                "Market": "ON_DEMAND",
-                                "InstanceRole": "CORE",
-                                "InstanceType": "r3.2xlarge",
-                                "InstanceCount": 1
+                                "Key": "environment",
+                                "Value": "development"
                             }
-                        ],
-                        "TerminationProtected": false,
-                        "KeepJobFlowAliveWhenNoSteps": false
-                    },
-                    "Applications":[
-                        { "Name": "Spark" }
-                    ],
-                    "VisibleToAllUsers": true,
-                    "JobFlowRole": "EMR_EC2_DefaultRole",
-                    "ServiceRole": "EMR_DefaultRole",
-                    "Tags": [
-                        {
-                            "Key": "app",
-                            "Value": "analytics"
-                        },
-                        {
-                            "Key": "environment",
-                            "Value": "development"
-                        }
-                    ]
-                }
-            '''))
+                        ]
+                    }
+                '''))
     merge_conn(
         Connection(
             conn_id='databricks_default', conn_type='databricks',
@@ -286,6 +278,13 @@ def initdb():
         Connection(
             conn_id='cassandra_default', conn_type='cassandra',
             host='cassandra', port=9042))
+
+
+def initdb():
+    from airflow import models
+    upgradedb()
+
+    add_default_conections()
 
     dagbag = models.DagBag()
     # Save individual DAGs in the ORM
