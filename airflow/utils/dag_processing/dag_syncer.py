@@ -28,7 +28,7 @@ _dag_modification_date = {}
 
 def get_dag(dag_id, use_cache=True):
     dag_model = DagModel.get_dagmodel(dag_id)
-    if (not use_cache or not _file_cache[dag_model.fileloc]):
+    if not use_cache or not _file_cache[dag_model.fileloc]:
         cache_dag_file(dag_model.fileloc, overwrite=True)
 
     return _file_cache[dag_model.fileloc][dag_id]
@@ -47,7 +47,7 @@ def cache_dag_file(file, overwrite=False, sync_to_db=False):
         _dag_modification_date[file] = mtime
 
 
-def sync_dir_to_db(dirctory, overwrite=False):
-    files = list_py_file_paths(dirctory)
+def sync_dir_to_db(directory, overwrite=False):
+    files = list_py_file_paths(directory)
     for file in files:
         cache_dag_file(file, overwrite=overwrite, sync_to_db=True)
